@@ -1,0 +1,178 @@
+<%- include('partials/header', { pageTitle: 'Dashboard' }); -%>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Dashboard</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only"></span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/auth/logout">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2>Welcome, <%= user.username %></h2>
+
+        <!-- Row for adding new post and displaying random content -->
+        <div class="row mt-4">
+            <!-- Column for adding new post -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Add New Post
+                    </div>
+
+                    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    <!-- Display success message -->
+                    <div id="success-message" class="alert alert-success" style="display: none;"></div>
+
+                    <div class="card-body">
+                        <form id="add-post-form">
+                            <div class="form-group">
+                                <label for="post-title">Title</label>
+                                <input type="text" class="form-control" id="post-title" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="post-body">Body</label>
+                                <textarea class="form-control" id="post-body" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-2" id="add-post-button">Add Post</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column for displaying random content -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Random Content from API
+                    </div>
+                    <div class="card-body" id="random-content">
+                        <!-- Placeholder content will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+   
+        
+    </div>
+
+    <%- include('partials/footer'); -%>
+    <script>
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+
+        // Base url for fetching post
+        const apiUrl = 'https://jsonplaceholder.typicode.com/posts';
+
+        /**
+         * Fetches and displays the first 10 posts from the API.
+         * Updates the random content section with the posts.
+        */
+        function fetchAndDisplayPosts() {
+            const randomContent = document.getElementById('random-content');
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    // Take the first 10 posts
+                    const firstTenPosts = data.slice(0, 10);
+
+                    // Generate HTML for each post
+                    const postsHTML = firstTenPosts.map(post => `
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">${post.title}</h5>
+                                <p class="card-text">${post.body}</p>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    randomContent.innerHTML = postsHTML;
+                })
+                .catch(error => {
+                    console.error(error);
+                    randomContent.innerHTML = 'Error fetching content';
+                });
+        }
+
+        fetchAndDisplayPosts()
+        
+        const addPostForm = document.getElementById('add-post-form');
+        const addPostButton = document.getElementById('add-post-button');
+        
+        addPostForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const postTitle = document.getElementById('post-title').value;
+            const postBody = document.getElementById('post-body').value;
+
+            var validationError = '';
+            if ( !postTitle || !postBody ) {
+                validationError.textContent = 'Verification code field cannot be blank.';
+            }
+
+            if (validationError) {
+                errorMessage.textContent = validationError;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                verificationButton.disabled = false;
+                return;
+            }
+
+            addPostButton.disabled = true;
+
+            const requestData = {
+                title: postTitle,
+                body: postBody,
+                userId: `<%= user.id %>`
+            };
+
+            // Send POST request to your backend API for adding a post
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify( requestData )
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response, you can refresh content or show a success message
+                console.log(data);
+                addPostForm.reset()
+                fetchAndDisplayPosts()
+                successMessage.style.display = 'block'
+                successMessage.textContent = 'Post added successfully'
+                setTimeout(() => {
+                    successMessage.style.display = 'none'
+                    successMessage.textContent = ''
+                }, 1000)
+
+            })
+            .catch(eror => {
+                console.error(error);
+            })
+            .finally(() => {
+                // Re-enable the registration button
+                addPostButton.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

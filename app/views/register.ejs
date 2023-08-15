@@ -1,0 +1,116 @@
+<%- include('partials/header', { pageTitle: 'Registration' }); -%>
+<body>
+  <div class="container mt-5">
+    <h2>Registration Form</h2>
+
+    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+    <!-- Display success message -->
+    <div id="success-message" class="alert alert-success" style="display: none;"></div>
+
+    <form method="post" id="registration-form" autocomplete="off">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+      </div>
+      <div class="form-group">
+        <label for="firstname">First Name</label>
+        <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First Name" required>
+      </div>
+      <div class="form-group">
+        <label for="lastname">Last Name</label>
+        <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last Name" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+      </div>
+      <input type="hidden" value="" name="honeypot">
+      <button type="submit" class="btn btn-primary mt-1" id="register-button">Register</button>
+      <a href="/auth/login" class="btn btn-link mt-1">Already have an account? Login</a>
+      
+    </form>
+  </div>
+
+  <%- include('partials/footer'); -%>
+  <script>
+    // Handle form submission
+    const registrationForm = document.getElementById('registration-form');
+    const registerButton = document.getElementById('register-button');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+
+    registerButton.addEventListener('click', function (event) {
+      event.preventDefault();
+
+      registerButton.disabled = true;
+
+      // Get form elements
+      var username = document.querySelector('[name="username"]').value;
+      var firstname = document.querySelector('[name="firstname"]').value;
+      var lastname = document.querySelector('[name="lastname"]').value;
+      var email = document.querySelector('[name="email"]').value;
+      var password = document.querySelector('[name="password"]').value;
+      var honeypot = document.querySelector('[name="honeypot"]').value;
+
+      
+
+      // Perform form validation (add your validation logic here)
+      var validationError = '';
+      if (!username || !firstname || !lastname || !email || !password || honeypot) {
+        validationError.textContent = 'Please fill out all fields.';
+      }
+
+      if (validationError) {
+        errorMessage.textContent = validationError;
+        errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
+        registerButton.disabled = false;
+        return;
+      }
+
+      const requestData = {
+        username,
+        firstname,
+        lastname,
+        email,
+        password,
+      }
+
+      fetch('/auth/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json' // Set the content type to JSON
+        },
+        body: JSON.stringify(requestData) 
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.status) {
+            errorMessage.textContent = data.message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        } else {
+            successMessage.textContent = data.message;
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'block';
+            registrationForm.reset()
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        errorMessage.textContent = 'An error occurred.';
+        errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
+      })
+      .finally(() => {
+        // Re-enable the registration button
+        registerButton.disabled = false;
+      });;
+    });
+  </script>
+</body>
+</html>

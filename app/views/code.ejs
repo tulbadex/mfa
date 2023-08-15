@@ -1,0 +1,96 @@
+<%- include('partials/header', { pageTitle: 'Verification' }); -%>
+<body>
+    <div class="container mt-5">
+        <h2>Verification</h2>
+        <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+        <!-- Display success message -->
+        <div id="success-message" class="alert alert-success" style="display: none;"></div>
+        <form id="verification-form" autocomplete="off">
+            <div class="form-group">
+                <label for="verification-code">Enter Verification Code:</label>
+                <input type="text" class="form-control" id="verification-code" name="verificationCode" onkeyup="validateDigits(this)" title="Enter a 6-digit number" placeholder="Enter the code sent to your email here" required>
+            </div>
+            <button type="submit" class="btn btn-primary mt-2" id="verification-button">Verify</button>
+        </form>
+    </div>
+
+    <%- include('partials/footer'); -%>
+
+    <script>
+        // Handle form submission
+        const verificationForm = document.getElementById('verification-form');
+        const verificationButton = document.getElementById('verification-button');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+    
+        verificationButton.addEventListener('click', function (event) {
+          event.preventDefault();
+    
+          verificationButton.disabled = true;
+    
+          // Get form elements
+          var verificationCode = document.querySelector('[name="verificationCode"]').value;
+    
+          // Perform form validation (add your validation logic here)
+          var validationError = '';
+          if (!verificationCode) {
+            validationError.textContent = 'Verification code field cannot be blank.';
+          }
+    
+          if (validationError) {
+            errorMessage.textContent = validationError;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+            verificationButton.disabled = false;
+            return;
+          }
+    
+          const requestData = {
+            verificationCode,
+          }
+    
+          fetch('/auth/verify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' // Set the content type to JSON
+            },
+            body: JSON.stringify(requestData) 
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (!data.status) {
+                errorMessage.textContent = data.message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+            } else {
+                successMessage.textContent = data.message;
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'block';
+                verificationForm.reset()
+                location.href = '/auth/dashboard'
+                // location.assign('/');
+            }
+          })
+          .catch(error => {
+            console.error(error);
+            errorMessage.textContent = 'An error occurred.';
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+          })
+          .finally(() => {
+            // Re-enable the registration button
+            verificationButton.disabled = false;
+          });
+        });
+
+        function validateDigits(input) {
+            input.value = input.value.replace(/\D/g, ''); // Remove non-digit characters
+            if (input.value.length > 6) {
+                input.value = input.value.slice(0, 6); // Limit to 6 digits
+            }
+        }
+
+    </script>
+
+</body>
+</html>
