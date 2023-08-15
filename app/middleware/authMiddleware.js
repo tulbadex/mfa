@@ -9,14 +9,14 @@ const requireAuth = (req, res, next) => {
         jwt.verify(token, process.env.AUTH_SECRETE, (err, decodedToken) => {
             if(err){
                 console.log(err.message);
-                res.redirect('/');
+                res.redirect('/auth/login');
             }else{
                 console.log(decodedToken);
                 next();
             }
         });
     }else{
-        res.redirect('/');
+        res.redirect('/auth/login');
     }
 }
 
